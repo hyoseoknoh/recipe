@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>일치하는 레시피 목록</h1>
+        <p>입력된 재료: <strong><%= userIngredients.join(', ') %></strong></p>
+
+        <ul class="list-group">
+            <% recipes.forEach(function(recipe) { %>
+                <li class="list-group-item">
+                    <h5><a href="/recipe/<%= recipe.RCP_SNO %>"><%= recipe.RCP_TTL %></a></h5>
+                    <p>일치율: <%= recipe.matchPercentage.toFixed(2) %> %</p>
+                    <% if (recipe.missingIngredients.length > 0) { %>
+                        <p>추가 재료: <%= recipe.missingIngredients.join(', ') %></p>
+                    <% } %>
+                </li>
+            <% }); %>
+        </ul>
+
+        <% if (recipes.length === 0) { %>
+            <p>입력한 재료로 일치하는 레시피가 없습니다.</p>
+        <% } %>
+    </div>
+</body>
+</html>

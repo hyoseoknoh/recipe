@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= recipe.CKG_NM %> 레시피</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4"><%= recipe.CKG_NM %></h1>
+
+        <!-- 메인 이미지 및 레시피 기본 정보 -->
+        <div class="row">
+            <div class="col-md-4">
+                <img src="<%= mainImage %>" class="img-fluid rounded mb-3" alt="<%= recipe.CKG_NM %>">
+            </div>
+            <div class="col-md-8">
+                <ul class="list-group mb-3">
+                    <li class="list-group-item"><strong>조회수:</strong> <%= recipe.INQ_CNT %></li>
+                    <li class="list-group-item"><strong>추천수:</strong> <%= recipe.RCMM_CNT %></li>
+                    <li class="list-group-item"><strong>스크랩수:</strong> <%= recipe.SRAP_CNT %></li>
+                </ul>
+                <p><strong>요리 설명:</strong> <%= recipe.CKG_IPDC %></p>
+                <p><strong>재료:</strong> <%= recipe.CKG_MTRL_CN %></p>
+                <p><strong>요리 방법:</strong> <%= recipe.CKG_MTH_ACTO_NM %></p>
+                <p><strong>등록자:</strong> <%= recipe.RGTR_NM %></p>
+            </div>
+        </div>
+
+        <!-- 조리 순서 -->
+        <h2 class="text-center mt-5">조리 순서</h2>
+        <div class="row">
+            <% steps.forEach((step, index) => { %>
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <% if (step.image) { %>
+                            <img src="<%= step.image %>" class="card-img-top" alt="조리 이미지">
+                        <% } else { %>
+                            <img src="https://via.placeholder.com/150" class="card-img-top" alt="이미지 없음">
+                        <% } %>
+                        <div class="card-body">
+                            <h5 class="card-title">단계 <%= index + 1 %></h5>
+                            <p class="card-text"><%= step.description %></p>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+
+        <!-- 메인 페이지로 돌아가기 버튼 -->
+        <div class="text-center mt-5">
+            <a href="/" class="btn btn-primary">메인 페이지로 돌아가기</a>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
