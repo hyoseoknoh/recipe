@@ -24,41 +24,34 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
   })
   .catch(error => console.error('MongoDB 연결 실패:', error));
 
-// 레시피 크롤링 함수// 레시피 크롤링 함수
 // 레시피 크롤링 함수
 async function scrapeRecipe(recipeId) {
   const url = `https://m.10000recipe.com/recipe/${recipeId}`;
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
+
   try {
-      // 페이지 로드 시 타임아웃을 0으로 설정하여 무제한으로 기다리게 함
-      await page.goto(url, { timeout: 0, waitUntil: 'domcontentloaded' });
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
 
-      // 메인 이미지 가져오기
-      const mainImage = await page.$eval('.view3_pic_img img', img => img.src);
+    // 메인 이미지 가져오기
+    const mainImage = await page.$eval('.view3_pic_img img', img => img.src).catch(() => null);
 
-      // 조리 순서와 이미지를 가져오기
-      const steps = await page.$$eval('.step_list li', nodes => {
-          return nodes.map(node => ({
-              description: node.querySelector('.step_list_txt_cont') 
-                  ? node.querySelector('.step_list_txt_cont').innerText.trim() 
-                  : "",
-              image: node.querySelector('img') 
-                  ? node.querySelector('img').src 
-                  : null
-          }));
-      });
+    // 조리 순서와 이미지를 가져오기
+    const steps = await page.$$eval('.step_list.st_thumb li', nodes => {
+      return nodes.map(node => ({
+        description: node.querySelector('.step_list_txt_cont') ? node.querySelector('.step_list_txt_cont').innerText.trim() : '',
+        image: node.querySelector('.step_list_txt_pic img') ? node.querySelector('.step_list_txt_pic img').src : '기본이미지URL'
+      }));
+    }).catch(() => []);
 
-      await browser.close();
-      return { mainImage, steps };
+    await browser.close();
+    return { mainImage, steps };
   } catch (error) {
-      console.error("크롤링 중 오류 발생:", error);
-      await browser.close();
-      return { mainImage: null, steps: [] };
+    console.error("레시피 크롤링 중 오류 발생:", error);
+    await browser.close();
+    return { mainImage: null, steps: [] };
   }
 }
-
-
 
 // 메인 페이지 (레시피 목록)
 app.get('/', async (req, res) => {
@@ -104,14 +97,15 @@ app.get('/recipe/:id', async (req, res) => {
 // 검색 라우트
 app.get('/search', async (req, res) => {
   const userInput = req.query.ingredients;
-  const userIngredients = userInput.split(',').map(item => item.trim());
+  const userIngredients = userInput.split(',').map(item => item.trim()); // 입력한 재료를 쉼표로 분리
 
   try {
-    const recipes = await collection.find().toArray();
+    const recipes = await collection.find().toArray(); // 모든 레시피 가져오기
 
+    // 각 레시피에 대해 일치율 계산
     const matchedRecipes = recipes.map(recipe => {
       const recipeIngredients = typeof recipe.CKG_MTRL_CN === 'string' 
-        ? recipe.CKG_MTRL_CN.split('|').map(item => item.trim())
+        ? recipe.CKG_MTRL_CN.split('|').map(item => item.trim()) // 레시피 재료를 분리
         : [];
 
       const matchingIngredients = userIngredients.filter(ingredient => 
@@ -131,10 +125,13 @@ app.get('/search', async (req, res) => {
       };
     });
 
+    // 일치율이 20% 이상인 레시피만 필터링
     const filteredRecipes = matchedRecipes.filter(recipe => recipe.matchPercentage >= 20);
 
+    // 일치율이 높은 순서대로 정렬
     filteredRecipes.sort((a, b) => b.matchPercentage - a.matchPercentage);
 
+    // 검색 결과를 렌더링
     res.render('searchResults', {
       userIngredients,
       recipes: filteredRecipes
