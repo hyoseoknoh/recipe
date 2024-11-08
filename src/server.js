@@ -27,7 +27,10 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
 // 레시피 크롤링 함수
 async function scrapeRecipe(recipeId) {
   const url = `https://m.10000recipe.com/recipe/${recipeId}`;
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
   const page = await browser.newPage();
 
   try {
